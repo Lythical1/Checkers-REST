@@ -36,19 +36,19 @@ h1 {
 
 /* Status message */
 .status {
-    text-align: center;
-    font-weight: bold;
-    height: 20px;
-    color: #333;
-    margin-top: 10px;
+	text-align: center;
+	font-weight: bold;
+	height: 20px;
+	color: #333;
+	margin-top: 10px;
 }
 
 /* Controls */
 .controls {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 20px;
+	display: flex;
+	justify-content: center;
+	gap: 20px;
+	margin-bottom: 20px;
 }
 
 button {
@@ -82,35 +82,43 @@ button:hover {
 /* Checker cells */
 
 .cell {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+	width: 50px;
+	height: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .light-cell {
-    background-color: #e8d0aa;
+	background-color: #e8d0aa;
 }
 
 .dark-cell {
-    background-color: #b58863;
+	background-color: #b58863;
 }
 
 /* Pieces styling */
 .piece {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #333;
-    box-sizing: border-box;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	cursor: pointer;
+	border: 2px solid #333;
+	box-sizing: border-box;
 }
 
 .light-piece {
-    background-color: #f9f9f9;
+	background-color: #f9f9f9;
 }
 
 .dark-piece {
-    background-color: #333;
+	background-color: #333;
+}
+
+.selected {
+	box-shadow: 0 0 8px 3px #4caf50;
+}
+
+.king {
+	border: px solid #ffd700;
 }
