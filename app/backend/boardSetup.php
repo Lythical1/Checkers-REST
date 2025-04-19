@@ -20,10 +20,12 @@ try {
         $gameState['createdAt'] = $now;
         $gameState['lastUpdated'] = $now;
         $gameState['gameId'] = uniqid('game_');
-        
-        return $gameState;
-    } 
+        echo json_encode($gameState);
+    } else {
+        echo json_encode(['error' => 'Game state file not found']);
+    }
 } catch (Exception $e) {
     // Log the error message
     error_log("Error reading starting game state file: " . $e->getMessage());
+    echo json_encode(['error' => 'Failed to load game state']);
 }
