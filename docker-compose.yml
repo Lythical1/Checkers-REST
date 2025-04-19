@@ -1,0 +1,57 @@
+services:
+  nginx:
+      build: ./app/nginx
+      container_name: nginx
+      ports:
+          - "3000:80"
+      depends_on:
+          - backend
+          - frontend
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: checkers
+      MYSQL_USER: bit_academy
+      MYSQL_PASSWORD: bit_academy
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d
+
+  frontend:
+    build: 
+      context: .
+      dockerfile: app/frontend/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - ./app/frontend:/var/www/html
+
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      - db
+
+  backend:
+    build: 
+      context: .
+      dockerfile: app/backend/Dockerfile
+    ports:
+      - "8082:80"
+    depends_on:
+      - db
+    volumes:
+      - ./app/backend:/var/www/html
+
+volumes:
+  dbdata:
