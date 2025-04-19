@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>BIT Checkers Game</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<div class="container">
+			<h1>BIT Checkers Game</h1>
+
+			<div class="game-info">
+				<div id="current-turn">
+					Current Turn: <span id="turn-display">Light</span>
+				</div>
+			</div>
+
+			<div class="board-container">
+				<div id="board" class="checkerboard"></div>
+			</div>
+
+			<div class="controls">
+				<button id="new-game-btn">New Game</button>
+                <button id="load-game-btn">Load Game</button>
+				<button id="save-game-btn">Save Game</button>
+			</div>
+
+			<div id="status-message" class="status"></div>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
+</html>
