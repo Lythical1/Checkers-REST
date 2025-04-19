@@ -1,0 +1,105 @@
+{
+	"board": [
+		[
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false }
+		],
+		[
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null
+		],
+		[
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false }
+		],
+		[
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null,
+			{ "type": "piece", "color": "dark", "king": false },
+			null
+		],
+		[null, null, null, null, null, null, null, null, null, null],
+		[null, null, null, null, null, null, null, null, null, null],
+		[
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false }
+		],
+		[
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null
+		],
+		[
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false }
+		],
+		[
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null,
+			{ "type": "piece", "color": "light", "king": false },
+			null
+		]
+	],
+	"currentTurn": "light",
+	"createdAt": "",
+	"lastUpdated": ""
+}
