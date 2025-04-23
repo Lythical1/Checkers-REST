@@ -50,6 +50,15 @@ function renderBoard() {
     // Clear the board first
     boardElement.innerHTML = '';
 
+    const piecesWithCapture = checkForMandatoryCaptures().map(piece => {
+        return {
+            row: piece.row,
+            col: piece.col,
+            moves: piece.moves
+        };
+    }
+    );
+
     // Create cells and pieces
     for (let row = 0; row < 10; row++) {
         for (let col = 0; col < 10; col++) {
@@ -70,6 +79,10 @@ function renderBoard() {
                 pieceElement.classList.add('piece');
                 pieceElement.classList.add(`${piece.color}-piece`);
 
+                // Add red highlight for pieces with capture moves available
+                if (piecesWithCapture.some(p => p.row === row && p.col === col)) {
+                    pieceElement.classList.add('must-capture');
+                }
 
                 if (piece.king) {
                     pieceElement.classList.add('king');
@@ -97,30 +110,51 @@ function handleCellClick(row, col) {
     }
 
     const clickedPiece = gameState.board[row][col];
+    const mandatoryCaptures = checkForMandatoryCaptures();
+
 
     // If a piece is already selected
     if (selectedCell) {
         // Check if the clicked cell is a valid move destination
         const isValidMove = validMoves.some(move => move.row === row && move.col === col);
-        
+
         if (isValidMove) {
             // Make the move
             makeMove(selectedCell.row, selectedCell.col, row, col);
             clearSelection();
             return;
         }
-        
+
         // If not a valid move, clear the selection
         clearSelection();
-        
-        // If clicking on another piece of the current player's color, select it
+
+        // If clicking on another valid piece, select it (only if it has capture moves when mandatory captures exist)
         if (clickedPiece && clickedPiece.color === gameState.currentTurn) {
+            // If there are mandatory captures, only allow selecting pieces with capture moves
+            if (mandatoryCaptures.length > 0) {
+                const canCapture = mandatoryCaptures.some(piece => piece.row === row && piece.col === col);
+                if (canCapture) {
+                    selectCell(row, col);
+                } else {
+                    statusMessage.textContent = 'Capture is mandatory! Select a piece that can capture.';
+                }
+            } else {
+                selectCell(row, col);
+            }
+        }
+    }
+    else if (clickedPiece && clickedPiece.color === gameState.currentTurn) {
+        // If there are mandatory captures, only allow selecting pieces with capture moves
+        if (mandatoryCaptures.length > 0) {
+            const canCapture = mandatoryCaptures.some(piece => piece.row === row && piece.col === col);
+            if (canCapture) {
+                selectCell(row, col);
+            } else {
+                statusMessage.textContent = 'Capture is mandatory! Select a piece that can capture.';
+            }
+        } else {
             selectCell(row, col);
         }
-    } 
-    // If no piece is selected yet and clicked on the current player's piece
-    else if (clickedPiece && clickedPiece.color === gameState.currentTurn) {
-        selectCell(row, col);
     }
 }
 
@@ -224,7 +258,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
     try {
         // First update the game state locally
         const piece = gameState.board[fromRow][fromCol];
-        
+
         // Handle capture
         if (Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 2) {
             const midRow = Math.floor((fromRow + toRow) / 2);
@@ -257,7 +291,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
             toRow: toRow,
             toCol: toCol
         };
-        
+
         // Add to move history
         if (!gameState.movesHistory) {
             gameState.movesHistory = [];
@@ -277,7 +311,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
         // Update UI first for better user experience
         renderBoard();
         updateGameInfo();
-        
+
         // Then send to server to save
         const response = await fetch('/api/move.php', {
             method: 'POST',
@@ -296,7 +330,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
         // Get the text response first to debug
         const responseText = await response.text();
         console.log("Raw server response:", responseText);
-        
+
         // Try to parse the JSON
         let result;
         try {
@@ -305,7 +339,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
             console.error("Failed to parse JSON response:", e);
             throw new Error("Server returned invalid JSON");
         }
-        
+
         if (result.success) {
             // Update with any changes from server
             gameState = result.gameState;
@@ -318,7 +352,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
     } catch (error) {
         console.error('Move error:', error);
         statusMessage.textContent = `Error: ${error.message}`;
-        
+
         // Continue with the local move even if server save fails
         renderBoard();
         updateGameInfo();
@@ -337,7 +371,7 @@ function updateGameInfo() {
     if (lightCaptured) {
         lightCaptured.textContent = gameState.capturedPieces.light;
     }
-    
+
     if (darkCaptured) {
         darkCaptured.textContent = gameState.capturedPieces.dark;
     }
@@ -399,4 +433,23 @@ function simulateMove(fromRow, fromCol, toRow, toCol) {
     // Render the updated state
     renderBoard();
     updateGameInfo();
+}
+
+// Check if the current player has any mandatory captures
+function checkForMandatoryCaptures() {
+    const mandatoryCapturePieces = [];
+
+    // Iterate through all pieces of current player
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 10; col++) {
+            const piece = gameState.board[row][col];
+            if (piece && piece.color === gameState.currentTurn) {
+                const validMoves = findValidMoves(row, col);
+                if (validMoves.some(move => move.capture)) {
+                    mandatoryCapturePieces.push({ row, col, moves: validMoves });
+                }
+            }
+        }
+    }
+    return mandatoryCapturePieces;
 }
