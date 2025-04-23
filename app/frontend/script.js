@@ -180,15 +180,16 @@ function findValidMoves(row, col) {
     // Direction of movement depends on piece color and if it's a king
     const directions = [];
 
-    if (piece.color === 'light') {
+    if (piece.king) {
+        // Kings can move in all 4 diagonal directions
+        directions.push({ dr: -1, dc: -1 }, { dr: -1, dc: 1 }, { dr: 1, dc: -1 }, { dr: 1, dc: 1 });
+    } else if (piece.color === 'light') {
         // Light pieces move up
         directions.push({ dr: -1, dc: -1 }, { dr: -1, dc: 1 });
-    }
-    else if (piece.color === 'dark') {
+    } else if (piece.color === 'dark') {
         // Dark pieces move down
         directions.push({ dr: 1, dc: -1 }, { dr: 1, dc: 1 });
     } else {
-
         console.error('Unexpected piece color:', piece.color);
         return [];
     }
@@ -221,47 +222,106 @@ function findValidMoves(row, col) {
 
 async function makeMove(fromRow, fromCol, toRow, toCol) {
     try {
-        // Send move to server
-        const response = await fetch('move.php', {
+        // First update the game state locally
+        const piece = gameState.board[fromRow][fromCol];
+        
+        // Handle capture
+        if (Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 2) {
+            const midRow = Math.floor((fromRow + toRow) / 2);
+            const midCol = Math.floor((fromCol + toCol) / 2);
+            const capturedPiece = gameState.board[midRow][midCol];
+
+            if (capturedPiece) {
+                // Remove captured piece
+                gameState.board[midRow][midCol] = null;
+                gameState.capturedPieces[gameState.currentTurn]++;
+            }
+        }
+
+        // Move piece
+        gameState.board[toRow][toCol] = piece;
+        gameState.board[fromRow][fromCol] = null;
+
+        // Check if piece becomes king
+        if ((piece.color === 'light' && toRow === 0) || (piece.color === 'dark' && toRow === 9)) {
+            piece.king = true;
+        }
+
+        // Switch turns
+        gameState.currentTurn = gameState.currentTurn === 'light' ? 'dark' : 'light';
+
+        // Update last move
+        gameState.lastMove = {
+            fromRow: fromRow,
+            fromCol: fromCol,
+            toRow: toRow,
+            toCol: toCol
+        };
+        
+        // Add to move history
+        if (!gameState.movesHistory) {
+            gameState.movesHistory = [];
+        }
+        gameState.movesHistory.push({
+            from: { row: fromRow, col: fromCol },
+            to: { row: toRow, col: toCol },
+            player: piece.color,
+            time: new Date().toISOString()
+        });
+
+        // Make sure we have a gameId
+        if (!gameState.gameId) {
+            gameState.gameId = gameState.game_id || `game_${Date.now()}`;
+        }
+
+        // Update UI first for better user experience
+        renderBoard();
+        updateGameInfo();
+        
+        // Then send to server to save
+        const response = await fetch('/api/move.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                gameState: gameState,
-                fromRow: fromRow,
-                fromCol: fromCol,
-                toRow: toRow,
-                toCol: toCol
+                gameState: gameState
             })
         });
 
         if (!response.ok) {
-            throw new Error('Failed to make move');
+            throw new Error(`Server error: ${response.status}`);
         }
 
-        const result = await response.json();
-
+        // Get the text response first to debug
+        const responseText = await response.text();
+        console.log("Raw server response:", responseText);
+        
+        // Try to parse the JSON
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (e) {
+            console.error("Failed to parse JSON response:", e);
+            throw new Error("Server returned invalid JSON");
+        }
+        
         if (result.success) {
-            // Update game state
+            // Update with any changes from server
             gameState = result.gameState;
-            renderBoard();
-            updateGameInfo();
-
-            // Handle captures
             if (Math.abs(fromRow - toRow) === 2) {
                 statusMessage.textContent = 'Piece captured!';
-            } else {
-                statusMessage.textContent = '';
             }
         } else {
-            statusMessage.textContent = result.message || 'Invalid move';
+            statusMessage.textContent = result.message || 'Failed to save move';
         }
     } catch (error) {
-        // For demo purposes, we'll simulate the move client-side if the server call fails
-        simulateMove(fromRow, fromCol, toRow, toCol);
-        statusMessage.textContent = `Note: Move simulated client-side due to server error: ${error.message}`;
-        console.error(error);
+        console.error('Move error:', error);
+        statusMessage.textContent = `Error: ${error.message}`;
+        
+        // Continue with the local move even if server save fails
+        renderBoard();
+        updateGameInfo();
     }
 }
 
