@@ -216,10 +216,38 @@ function findValidMoves(row, col) {
 
     // Direction of movement depends on piece color and if it's a king
     const directions = [];
-
     if (piece.king) {
-        // Kings can move in all 4 diagonal directions
+        // Kings can move multiple steps in all 4 diagonal directions
         directions.push({ dr: -1, dc: -1 }, { dr: -1, dc: 1 }, { dr: 1, dc: -1 }, { dr: 1, dc: 1 });
+        // Check all cells in each direction until blocked or capture is possible
+        directions.forEach(dir => {
+            let r = row + dir.dr;
+            let c = col + dir.dc;
+
+            while (isValidCell(r, c)) {
+                if (gameState.board[r][c] === null) {
+                    regularMoves.push({ row: r, col: c, capture: false });
+                } else {
+                    const capturedPiece = gameState.board[r][c];
+                    // Check if the captureable piece is of the opposite color
+                    if (capturedPiece && capturedPiece.color !== piece.color) {
+                        let r2 = r + dir.dr;
+                        let c2 = c + dir.dc;
+                        // Loop until finding another roadblock or invalid cell
+                        while (isValidCell(r2, c2) && gameState.board[r2][c2] === null) {
+                            captureMoves.push({ row: r2, col: c2, capture: true });
+                            r2 += dir.dr;
+                            c2 += dir.dc;
+                        }
+                    }
+                    break; // Stop checking further in this direction
+                }
+                r += dir.dr;
+                c += dir.dc;
+            }
+        });
+        return captureMoves.length > 0 ? captureMoves : regularMoves;
+    
     } else if (piece.color === 'light') {
         // Light pieces move up
         directions.push({ dr: -1, dc: -1 }, { dr: -1, dc: 1 });
@@ -259,19 +287,25 @@ function findValidMoves(row, col) {
 
 async function makeMove(fromRow, fromCol, toRow, toCol) {
     try {
-        // First update the game state locally
         const piece = gameState.board[fromRow][fromCol];
 
         // Handle capture
-        if (Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 2) {
-            const midRow = Math.floor((fromRow + toRow) / 2);
-            const midCol = Math.floor((fromCol + toCol) / 2);
-            const capturedPiece = gameState.board[midRow][midCol];
+        if (Math.abs(fromRow - toRow) > 1 && Math.abs(fromCol - toCol) > 1) {
+            const rowDirection = Math.sign(toRow - fromRow);
+            const colDirection = Math.sign(toCol - fromCol);
 
-            if (capturedPiece) {
-                // Remove captured piece
-                gameState.board[midRow][midCol] = null;
-                gameState.capturedPieces[gameState.currentTurn]++;
+            let currentRow = fromRow + rowDirection;
+            let currentCol = fromCol + colDirection;
+
+            while (currentRow !== toRow && currentCol !== toCol) {
+                const capturedPiece = gameState.board[currentRow][currentCol];
+                if (capturedPiece && capturedPiece.color !== piece.color) {
+                    // Remove captured piece
+                    gameState.board[currentRow][currentCol] = null;
+                    gameState.capturedPieces[gameState.currentTurn]++;
+                }
+                currentRow += rowDirection;
+                currentCol += colDirection;
             }
         }
 
@@ -324,7 +358,6 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
             body: JSON.stringify({
                 gameState: gameState,
                 gameId: gameState.gameId
-
             })
         });
 
@@ -332,23 +365,10 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
             throw new Error(`Server error: ${response.status}`);
         }
 
-        // Get the text response first to debug
-        const responseText = await response.text();
-        console.log("Raw server response:", responseText);
-
-        // Try to parse the JSON
-        let result;
-        try {
-            result = JSON.parse(responseText);
-        } catch (e) {
-            console.error("Failed to parse JSON response:", e);
-            throw new Error("Server returned invalid JSON");
-        }
-
+        const result = await response.json();
         if (result.success) {
-            // Update with any changes from server
             gameState = result.gameState;
-            if (Math.abs(fromRow - toRow) === 2) {
+            if (Math.abs(fromRow - toRow) > 1) {
                 statusMessage.textContent = 'Piece captured!';
             }
         } else {
