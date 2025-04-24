@@ -125,7 +125,7 @@ button:hover {
 }
 
 .king {
-	border: px solid #ffd700;
+	border: 2px solid #ffd700;
 }
 
 /* Highlight for pieces that must be used to capture */
@@ -141,4 +141,8 @@ button:hover {
 	100% {
 		box-shadow: 0 0 0 6px #ff4d4d, 0 0 20px #ff0000;
 	}
+}
+
+.copy-btn {
+	display: none;
 }

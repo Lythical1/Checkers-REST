@@ -10,8 +10,11 @@ const statusMessage = document.getElementById('status-message');
 const lightCaptured = document.getElementById('light-captured');
 const darkCaptured = document.getElementById('dark-captured');
 
+const gameIdValue = document.getElementById('game-id-value');
+
 const newGameButton = document.getElementById('new-game-btn');
 const loadButton = document.getElementById('load-game-btn');
+const copyButton = document.getElementById('copy-button');
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
@@ -319,7 +322,9 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                gameState: gameState
+                gameState: gameState,
+                gameId: gameState.gameId
+
             })
         });
 
@@ -349,6 +354,20 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
         } else {
             statusMessage.textContent = result.message || 'Failed to save move';
         }
+
+        gameIdValue.textContent = gameState.gameId;
+        copyButton.style.display = 'block';
+        copyButton.onclick = () => {
+            navigator.clipboard.writeText(gameState.gameId)
+                .then(() => {
+                    statusMessage.textContent = 'Game ID copied to clipboard!';
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                    statusMessage.textContent = 'Failed to copy Game ID.';
+                });
+        };
+
     } catch (error) {
         console.error('Move error:', error);
         statusMessage.textContent = `Error: ${error.message}`;
