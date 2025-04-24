@@ -11,6 +11,7 @@ const lightCaptured = document.getElementById('light-captured');
 const darkCaptured = document.getElementById('dark-captured');
 
 const gameIdValue = document.getElementById('game-id-value');
+const savedGameId = document.getElementById('saved-game-id');
 
 const newGameButton = document.getElementById('new-game-btn');
 const loadButton = document.getElementById('load-game-btn');
@@ -21,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initGame();
 
     newGameButton.addEventListener('click', initGame);
-    // loadButton.addEventListener('click', loadGame);
 });
 
 // Initialize or reset the game
@@ -471,4 +471,68 @@ function checkForMandatoryCaptures() {
         }
     }
     return mandatoryCapturePieces;
+}
+
+async function loadGame() {
+    try {
+        const gameId = savedGameId.value;
+        if (!gameId) {
+            statusMessage.textContent = "Please enter a game ID";
+            return;
+        }
+        
+        statusMessage.textContent = "Loading game...";
+        
+        const response = await fetch(`/api/loadGame.php?game_id=${gameId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Server error response:", errorText);
+            throw new Error(`Failed to load game (${response.status}): ${errorText}`);
+        }
+        
+        // Get the response data
+        const responseData = await response.json();
+        console.log("Raw server response:", responseData);
+        
+        // Check if the game_state is a string that needs parsing
+        if (responseData.game_state && typeof responseData.game_state === 'string') {
+            try {
+                // Parse the JSON string into an object
+                gameState = JSON.parse(responseData.game_state);
+            } catch (e) {
+                console.error("Failed to parse game state:", e);
+                throw new Error("Invalid game state data");
+            }
+        } else if (responseData.board) {
+            // If the response itself contains the game state properties
+            gameState = responseData;
+        } else {
+            throw new Error("Invalid game data format");
+        }
+        
+        // Make sure we have the game ID available
+        if (responseData.game_id) {
+            gameState.gameId = responseData.game_id;
+        }
+        
+        console.log("Processed game state:", gameState);
+        
+        // Now render the board with the properly parsed game state
+        renderBoard();
+        updateGameInfo();
+        statusMessage.textContent = "Game loaded successfully!";
+        
+        // Update game ID display
+        gameIdValue.textContent = gameState.gameId || gameState.game_id;
+        copyButton.style.display = 'block';
+    } catch (error) {
+        console.error('Error loading game:', error);
+        statusMessage.textContent = `Error: ${error.message}`;
+    }
 }

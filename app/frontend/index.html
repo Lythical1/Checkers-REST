@@ -22,12 +22,25 @@
 
 			<div class="controls">
 				<button id="new-game-btn">New Game</button>
-				<button id="copy-button">Copy Game ID</button>
-                <button id="load-game-btn">Load Game</button>
 			</div>
 
-			<div id="status-message" class="status"></div>
-			<div id="game-id" class="status">Game ID: <span id="game-id-value"></span></div>
+			<div class="status-container">
+				<div id="status-message" class="status"></div>
+			</div>
+			
+			<div class="game-id-container">
+				<div id="game-id" class="status">
+					Game ID: <span id="game-id-value"></span>
+				</div>
+				<button id="copy-button">Copy Game ID</button>
+			</div>
+			
+			<div class="load-game">
+				<div>
+					<input id="saved-game-id" type="text" placeholder="Paste your game ID here..."></input>
+				</div>
+				<button id="load-game-btn" onclick="loadGame()">Load Game</button>
+			</div>
 		</div>
 
 		<script src="script.js"></script>
