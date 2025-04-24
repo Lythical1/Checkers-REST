@@ -376,6 +376,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
         }
 
         gameIdValue.textContent = gameState.gameId;
+        savedGameId.value = gameState.gameId;
         copyButton.style.display = 'block';
         copyButton.onclick = () => {
             navigator.clipboard.writeText(gameState.gameId)
