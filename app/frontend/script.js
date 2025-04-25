@@ -288,6 +288,7 @@ function findValidMoves(row, col) {
 async function makeMove(fromRow, fromCol, toRow, toCol) {
     try {
         const piece = gameState.board[fromRow][fromCol];
+        let captureHappened = false;
 
         // Handle capture
         if (Math.abs(fromRow - toRow) > 1 && Math.abs(fromCol - toCol) > 1) {
@@ -303,6 +304,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
                     // Remove captured piece
                     gameState.board[currentRow][currentCol] = null;
                     gameState.capturedPieces[gameState.currentTurn]++;
+                    captureHappened = true;
                 }
                 currentRow += rowDirection;
                 currentCol += colDirection;
@@ -317,9 +319,6 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
         if ((piece.color === 'light' && toRow === 0) || (piece.color === 'dark' && toRow === 9)) {
             piece.king = true;
         }
-
-        // Switch turns
-        gameState.currentTurn = gameState.currentTurn === 'light' ? 'dark' : 'light';
 
         // Update last move
         gameState.lastMove = {
@@ -345,6 +344,53 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
             gameState.gameId = gameState.game_id || `game_${Date.now()}`;
         }
 
+        // Check for win condition before switching turns
+        // Verify if all opponent pieces are captured
+        const opponentColor = piece.color === 'light' ? 'dark' : 'light';
+        let opponentPiecesRemaining = false;
+        
+        // Count opponent pieces
+        for (let row = 0; row < 10; row++) {
+            for (let col = 0; col < 10; col++) {
+                const boardPiece = gameState.board[row][col];
+                if (boardPiece && boardPiece.color === opponentColor) {
+                    opponentPiecesRemaining = true;
+                    break;
+                }
+            }
+            if (opponentPiecesRemaining) break;
+        }
+        
+        // If opponent has no pieces, current player wins
+        if (!opponentPiecesRemaining) {
+            gameState.status = piece.color === 'light' ? 'light_won' : 'dark_won';
+            statusMessage.textContent = `${piece.color.charAt(0).toUpperCase() + piece.color.slice(1)} player wins!`;
+            gameState.currentTurn = `${piece.color.charAt(0).toUpperCase() + piece.color.slice(1)} player won`;
+        } else {
+            // Switch turns only if the game is still in progress
+            gameState.currentTurn = gameState.currentTurn === 'light' ? 'dark' : 'light';
+            
+            // Check if the new current player has any valid moves
+            let hasValidMoves = false;
+            for (let row = 0; row < 10 && !hasValidMoves; row++) {
+                for (let col = 0; col < 10; col++) {
+                    const checkPiece = gameState.board[row][col];
+                    if (checkPiece && checkPiece.color === gameState.currentTurn) {
+                        const moves = findValidMoves(row, col);
+                        if (moves.length > 0) {
+                            hasValidMoves = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // If new current player has no valid moves, they lose
+            if (!hasValidMoves && gameState.status === 'in_progress') {
+                gameState.status = gameState.currentTurn === 'light' ? 'dark_won' : 'light_won';
+            }
+        }
+
         // Update UI first for better user experience
         renderBoard();
         updateGameInfo();
@@ -368,7 +414,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
         const result = await response.json();
         if (result.success) {
             gameState = result.gameState;
-            if (Math.abs(fromRow - toRow) > 1) {
+            if (captureHappened) {
                 statusMessage.textContent = 'Piece captured!';
             }
         } else {
