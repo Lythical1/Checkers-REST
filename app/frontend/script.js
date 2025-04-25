@@ -247,7 +247,7 @@ function findValidMoves(row, col) {
             }
         });
         return captureMoves.length > 0 ? captureMoves : regularMoves;
-    
+
     } else if (piece.color === 'light') {
         // Light pieces move up
         directions.push({ dr: -1, dc: -1 }, { dr: -1, dc: 1 });
@@ -379,7 +379,7 @@ async function makeMove(fromRow, fromCol, toRow, toCol) {
         savedGameId.value = gameState.gameId;
         copyButton.style.display = 'block';
         copyButton.onclick = () => {
-            navigator.clipboard.writeText(gameState.gameId)
+            navigator.clipboard.writeText(gameState.gameId || gameState.game_id)
                 .then(() => {
                     statusMessage.textContent = 'Game ID copied to clipboard!';
                 })
@@ -501,26 +501,26 @@ async function loadGame() {
             statusMessage.textContent = "Please enter a game ID";
             return;
         }
-        
+
         statusMessage.textContent = "Loading game...";
-        
+
         const response = await fetch(`/api/loadGame.php?game_id=${gameId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             console.error("Server error response:", errorText);
             throw new Error(`Failed to load game (${response.status}): ${errorText}`);
         }
-        
+
         // Get the response data
         const responseData = await response.json();
         console.log("Raw server response:", responseData);
-        
+
         // Check if the game_state is a string that needs parsing
         if (responseData.game_state && typeof responseData.game_state === 'string') {
             try {
@@ -536,22 +536,33 @@ async function loadGame() {
         } else {
             throw new Error("Invalid game data format");
         }
-        
+
         // Make sure we have the game ID available
         if (responseData.game_id) {
             gameState.gameId = responseData.game_id;
         }
-        
+
         console.log("Processed game state:", gameState);
-        
+
         // Now render the board with the properly parsed game state
         renderBoard();
         updateGameInfo();
         statusMessage.textContent = "Game loaded successfully!";
-        
+
         // Update game ID display
         gameIdValue.textContent = gameState.gameId || gameState.game_id;
         copyButton.style.display = 'block';
+        copyButton.onclick = () => {
+            navigator.clipboard.writeText(gameState.gameId || gameState.game_id)
+                .then(() => {
+                    statusMessage.textContent = 'Game ID copied to clipboard!';
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                    statusMessage.textContent = 'Failed to copy Game ID.';
+                });
+        };
+
     } catch (error) {
         console.error('Error loading game:', error);
         statusMessage.textContent = `Error: ${error.message}`;
